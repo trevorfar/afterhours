@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {rows,solution,entries,numbers} from '../app/puzzle.ts';
+test('every answer has a clue, has at least three letters, and is unique',()=>{assert.equal(rows.length,7);assert.equal(entries.length,22);assert.equal(new Set(entries.map(e=>e.answer)).size,entries.length);for(const e of entries){assert.ok(e.clue);assert.ok(e.cells.length>=3);assert.equal(e.answer,e.cells.map(i=>solution[i]).join(''));assert.equal(e.number,numbers[e.cells[0]])}});
+test('every white square is crossed exactly once in each direction',()=>{solution.forEach((letter,i)=>{if(letter==='#')return;for(const direction of ['Across','Down'])assert.equal(entries.filter(e=>e.direction===direction&&e.cells.includes(i)).length,1)})});
+test('grid is connected and rotationally symmetric',()=>{const white=solution.map((s,i)=>s==='#'?-1:i).filter(i=>i>=0);const seen=new Set([white[0]]),queue=[white[0]];for(const i of queue){for(const j of [i-7,i+7,...(i%7?[i-1]:[]),...(i%7<6?[i+1]:[])])if(j>=0&&j<49&&solution[j]!=='#'&&!seen.has(j)){seen.add(j);queue.push(j)}}assert.equal(seen.size,white.length);solution.forEach((s,i)=>assert.equal(s==='#',solution[48-i]==='#'))});

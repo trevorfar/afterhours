@@ -1,0 +1,24 @@
+{
+  "name": "after-hours-crossword",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs && node serve.mjs",
+    "start": "node serve.mjs",
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
+    "test": "node --experimental-strip-types tests/puzzle.test.mjs && node --experimental-strip-types tests/creator.test.mjs && node build.mjs && node tests/interactions.mjs && node tests/creator-interactions.mjs"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "esbuild": "0.27.0",
+    "typescript": "5.9.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "happy-dom": "15.11.7"
+  }
+}

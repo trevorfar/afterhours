@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2022"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "types": [
+      "react",
+      "react-dom"
+    ],
+    "resolveJsonModule": true
+  },
+  "include": [
+    "app/page.tsx",
+    "app/puzzle.ts",
+    "client.tsx"
+  ]
+}
