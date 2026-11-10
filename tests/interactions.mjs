@@ -18,13 +18,14 @@ await key('Tab',{shiftKey:true});assert.match(q('.clue-banner').textContent,/dat
 await key(' ');assert.match(q('.clue-banner').textContent,/Carpenter/);
 await key('Home');await key('z');await key('z',{ctrlKey:true});assert.equal(doc.querySelectorAll('.square')[1].querySelector('.letter').textContent,'');
 await key('z',{ctrlKey:true,shiftKey:true});assert.equal(doc.querySelectorAll('.square')[1].querySelector('.letter').textContent,'Z');
-await click(textButton('Check ⌄'));await click(textButton('Check puzzle'));assert.equal(doc.querySelectorAll('.wrong').length,1);
-await key('Home');await key('Delete');assert.equal(q('.selected .letter').textContent,'');
+await click(textButton('Check'));assert.equal(doc.querySelectorAll('.wrong').length,1);const wrongCell=[...doc.querySelectorAll('.square')].indexOf(q('.wrong'));
+await key('Home');await key('Delete');assert.equal(q('.selected .letter').textContent,'');assert.equal(textButton('Check').getAttribute('aria-pressed'),'true');assert.equal(doc.querySelectorAll('.wrong').length,0);await key('Home');await key('z');assert.ok(doc.querySelectorAll('.square')[wrongCell].classList.contains('wrong'));await key('Home');await key('Delete');assert.equal(doc.querySelectorAll('.wrong').length,0);
 await key('+');await key('p');assert.ok(doc.querySelectorAll('.penciled').length);
 await key('Insert');assert.ok(q('.rebus-input'));const input=q('.rebus-input');const setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;setter.call(input,'HI');input.dispatchEvent(new window.Event('input',{bubbles:true}));await wait();await click(q('.close'));
 await click(q('[aria-label="Pause puzzle"]'));assert.ok(q('.pause-overlay'));await click(textButton('Resume puzzle →'));assert.equal(q('.pause-overlay'),null);
 const saved=JSON.parse(window.localStorage.getItem('after-hours-v1'));assert.ok(saved.board.letters.some(Boolean));
 await click(textButton('Reveal ⌄'));await click(textButton('Reveal puzzle'));await click(textButton('Reveal answers'));assert.match(q('.modal').textContent,/That’s a wrap/);assert.equal(doc.querySelectorAll('.revealed').length,41);
 await click(textButton('Back to the puzzle'));await click(q('[aria-label="Puzzle settings"]'));await click(textButton('Reset this puzzle'));await click(textButton('Reset puzzle'));assert.ok([...doc.querySelectorAll('.letter')].every(el=>!el.textContent));
-console.log('PASS: typing, next/previous clue, direction, undo/redo, checks, erasing, pencil, rebus dialog, pause/resume, saved progress, reveal/completion, reset.');
+await click(q('.clue'));await key('Tab');const second=q('.clue-banner').textContent;for(const _ of q('.grid').querySelectorAll('.square.word'))await key('x');await click(q('.clue'));await key('Tab');assert.notEqual(q('.clue-banner').textContent,second);for(let i=0;i<41;i++)await key('z');assert.match(q('.toast').textContent,/Every square is filled/);assert.match(q('.board-footer').textContent,/Not quite/);
+console.log('PASS: typing, next/previous clue, direction, undo/redo, checks, erasing, pencil, rebus dialog, pause/resume, saved progress, reveal/completion, reset, Tab skips filled clues, full-grid feedback.');
 await window.happyDOM.abort();window.close();

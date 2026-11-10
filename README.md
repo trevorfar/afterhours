@@ -28,12 +28,13 @@ Drafts autosave in this browser. **My puzzles** supports play, edit, export, and
 ## Solving features
 
 - Across/Down clue lists, selected word and crossing clue highlighting
-- Tab/Shift+Tab and Enter/Shift+Enter for next/previous clue
+- Tab/Shift+Tab and Enter/Shift+Enter for next/previous unfinished clue (fully filled clues are skipped)
 - Space to switch direction; arrows to switch axis and move
 - Home/End to jump within a word; Backspace/Delete to erase
 - Ctrl/Cmd+Z to undo; Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y to redo
 - `+` toggles pencil; Insert opens rebus entry; Escape leaves grid keyboard mode
-- Check/reveal a square, word, or puzzle; optional autocheck
+- Check toggle that marks wrong letters red and right letters green as you type, until you turn it off; reveal a square, word, or puzzle
+- A filled-in grid tells you whether it's correct
 - Optional skip-filled-squares behavior; pencil mode; rebus input
 - Timer, pause/resume, local progress persistence, completion and share result
 - Touch keyboard, responsive layout, printable blank puzzle, reset confirmation

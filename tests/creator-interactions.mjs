@@ -17,7 +17,7 @@ assert.equal(q('.puzzle-label strong').textContent,'My crossword');
 const key=async k=>{q('.grid').dispatchEvent(new window.KeyboardEvent('keydown',{key:k,bubbles:true}));await wait()};
 await key('a');await key('Tab');await key(' ');await key('ArrowDown');await key('Backspace');
 await click(button('Reveal ⌄'));await click(button('Reveal puzzle'));await click(button('Reveal answers'));assert.match(q('.modal').textContent,/You finished My crossword/);await click(button('Back to the puzzle'));
-await click(button('My puzzles'));assert.equal(doc.querySelectorAll('.puzzle-card').length,4);await click(button('Edit'));assert.ok(q('.editor-grid'));
+await click(button('My puzzles'));assert.equal(doc.querySelectorAll('.puzzle-card').length,4);const saved=[...doc.querySelectorAll('.puzzle-card')].find(card=>[...card.querySelectorAll('button')].some(b=>b.textContent.trim()==='Delete'));await click([...saved.querySelectorAll('button')].find(b=>b.textContent.trim()==='Edit'));assert.ok(q('.editor-grid'));
 await click(button('■ Blocks'));await click(q('.editor-grid [role="gridcell"]'));await click(button('↶ Undo'));assert.deepEqual(JSON.parse(window.localStorage.getItem('after-hours-draft')).cells,draft.cells);
 await click(button('Letters'));
 const black=[...doc.querySelectorAll('.editor-grid [role="gridcell"]')].find(c=>c.classList.contains('black'));
