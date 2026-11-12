@@ -2,6 +2,7 @@ import {Window} from 'happy-dom';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 const window=new Window({url:'http://localhost:3000',settings:{enableJavaScriptEvaluation:true}});
+window.fetch=()=>Promise.reject(new Error('offline'))
 window.document.body.innerHTML='<div id="root"></div>';
 window.eval(readFileSync('dist/client.js','utf8'));
 const wait=()=>new Promise(r=>setTimeout(r,25));await wait();
@@ -11,6 +12,10 @@ const click=async el=>{assert.ok(el);el.click();await wait()};
 const key=async(k,extra={})=>{q('.grid').dispatchEvent(new window.KeyboardEvent('keydown',{key:k,bubbles:true,...extra}));await wait()};
 const textButton=t=>[...doc.querySelectorAll('button')].find(b=>b.textContent.trim()===t);
 const selected=()=>[...doc.querySelectorAll('.square')].indexOf(q('.selected'));
+// With no server the bundled site puzzles load, Crossword #1 first; open the 7×7 sample from the list.
+assert.match(q('.puzzle-label').textContent,/Crossword #1/)
+await click(textButton('My Puzzles'))
+await click([...doc.querySelectorAll('.puzzle-card')].find(card=>card.textContent.includes('Twenty-something')).querySelector('.primary'))
 assert.equal(doc.querySelectorAll('.square').length,41);
 await key('a');assert.equal(q('.square .letter').textContent,'A');
 await key('Tab');assert.match(q('.clue-banner').textContent,/self-care/);

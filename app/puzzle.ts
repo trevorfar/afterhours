@@ -1,3 +1,4 @@
+import {parseAnimation,type Animation} from './animation.ts';
 export const rows = ['APP#ERA','DOE#DEN','SPOTIFY','##PET##','MOLDOVA','ARE#RIP','YES#SAT'];
 export const solution = rows.join('').split('');
 export type Entry = { id: string; number: number; direction: 'Across'|'Down'; cells: number[]; answer: string; clue: string };
@@ -14,7 +15,7 @@ const clues: Record<string,string> = {
 '35Across':'“We ___ so back”', '39Across':'“___ my sleep schedule”',
 '42Across':'Answer you hope for after “Want to get coffee?”', '46Across':'College entrance exam you’re glad is behind you'
 };
-export type Puzzle = { version: 1; id: string; title: string; author: string; size: number; cells: string[]; clues: Record<string,string> };
+export type Puzzle = { version: 1; id: string; title: string; author: string; size: number; cells: string[]; clues: Record<string,string>; animation?: Animation };
 export function derive(puzzle: Puzzle) {
  const numbers: Record<number,number> = {}, entries: Entry[] = [];
  const {size,cells} = puzzle;
@@ -42,7 +43,8 @@ export function parsePuzzle(value: unknown): Puzzle {
  if(!value||typeof value!=='object')throw new Error('Choose an After Hours puzzle JSON file.');
  const p=value as Puzzle;
  if(p.version!==1||!Number.isInteger(p.size)||p.size<3||p.size>21||!Array.isArray(p.cells)||p.cells.length!==p.size*p.size||p.cells.some(c=>typeof c!=='string'||!/^([A-Z]{1,12}|#|)$/.test(c))||!p.clues||typeof p.clues!=='object'||Array.isArray(p.clues)||Object.values(p.clues).some(c=>typeof c!=='string'||c.length>500)||typeof p.title!=='string'||p.title.length>100||typeof p.author!=='string'||p.author.length>100)throw new Error('Invalid puzzle. Use a square grid (3–21), letters or # blocks, and text clues.');
- return {version:1,id:typeof p.id==='string'?p.id:crypto.randomUUID(),title:p.title,author:p.author,size:p.size,cells:[...p.cells],clues:{...p.clues}};
+ // The animation is optional and never part of progressKey, so adding or changing one keeps a solver's progress.
+ return {version:1,id:typeof p.id==='string'?p.id:crypto.randomUUID(),title:p.title,author:p.author,size:p.size,cells:[...p.cells],clues:{...p.clues},...(p.animation?{animation:parseAnimation(p.animation)}:{})};
 }
 export function validate(p: Puzzle): string[] {
  const issues:string[]=[];const {entries}=derive(p);

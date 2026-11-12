@@ -63,3 +63,59 @@ main{max-width:1410px;margin:auto;padding:34px 36px 0}.eyebrow,.kicker{font-size
 .editor-grid button{padding:0;min-height:0;overflow:hidden}
 .editor-clues{position:relative;scroll-behavior:smooth}
 @media(max-width:700px){.editor-workspace{grid-template-columns:minmax(0,1fr)}.editor-clues{max-height:500px}}
+
+/* Editor mode */
+.publication-nav .editor-link{color:#666}
+.publication-nav .editor-link .green-dot{background:#3b8a55;width:7px;height:7px;margin-right:6px;vertical-align:1px}
+.heading-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.library .section-note{margin:6px 0 -18px}
+.puzzle-card{position:relative}
+.puzzle-card.draggable{cursor:grab}
+.puzzle-card.dragging{opacity:.4}
+.puzzle-card .drag-handle{position:absolute;top:22px;right:22px;font-size:20px;line-height:1;color:#aaa}
+.puzzle-card button:disabled{opacity:.35;cursor:default}
+.login-form label{display:flex;flex-direction:column;gap:7px;font-size:12px;margin-top:4px}
+.login-form input{font-size:16px}
+.login-form .primary{margin:8px 18px 0 0}
+.login-form .primary:disabled{opacity:.5}
+
+/* Animation: the one-time overlay on the solver's grid, and the studio that draws it */
+.animation-stage{position:absolute;inset:1px;z-index:3;overflow:hidden;cursor:progress}
+.animation-canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.animation-blocker{position:fixed;inset:0;z-index:50;cursor:progress}
+.animation-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;color:#666;margin:-6px 0 24px}
+.animation-row>span{flex:1;min-width:220px;line-height:1.6}
+.animation-row strong{color:#111;margin-right:6px}
+.animation-row .delete-link{font-size:12px}
+.creator-topbar select{padding:9px;font-size:12px;max-width:220px}
+.studio-attached button{text-decoration:underline;font-size:inherit}
+.studio-settings{display:grid;grid-template-columns:2fr 1fr 1fr 1.6fr 1.8fr;gap:18px;margin:24px 0;align-items:end}
+.studio-settings label{font-size:12px;font-weight:600;display:flex;flex-direction:column;gap:8px;min-width:0}
+.studio-settings input[type=number],.studio-settings input[type=text]{width:100%;font-size:15px}
+.studio-settings .inline{display:flex;align-items:center;gap:10px;font-weight:400}
+.studio-settings .inline input[type=number]{width:74px}
+.studio-settings .check{display:flex;align-items:center;gap:5px;font-size:11px}
+.studio input[type=color]{width:42px;height:40px;padding:2px;flex:none;cursor:pointer}
+.studio-workspace{display:grid;grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:42px;align-items:start}
+.studio-colors{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.studio-colors label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+.studio-colors input[type=text]{width:92px;font:13px ui-monospace,monospace;padding:9px}
+.studio-colors input[type=number]{width:62px;font-size:13px;padding:9px 6px}
+.swatches{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px;min-height:24px}
+.swatches button{width:24px;height:24px;border:1px solid #0003;border-radius:2px}
+.swatches button.selected{outline:2px solid #111;outline-offset:1px}
+.pixel-wrap{position:relative;border:1px solid #111}
+.pixel-pad{display:grid;aspect-ratio:1;touch-action:none;user-select:none;cursor:crosshair}
+.pixel-pad.see-through,.studio .see-through{background:repeating-conic-gradient(#e9e9e9 0 25%,#fff 0 50%) 0 0/16px 16px}
+.pixel-pad>div{box-shadow:inset 0 0 0 .5px #0000001f;min-width:0;min-height:0}
+.pixel-wrap .animation-stage{inset:0;cursor:default}
+.studio-frames h2{font:400 30px 'Libre Caslon Display',Georgia,serif;margin:5px 0 8px}
+.studio-frames>p{font-size:13px;color:#666;margin:0 0 16px}
+.frame-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px;max-height:420px;overflow:auto;padding:3px}
+.frame{border:1px solid #ccc;padding:4px 4px 2px;display:flex;flex-direction:column;gap:3px;align-items:center;background:#fff}
+.frame canvas{aspect-ratio:1;border:1px solid #eee}
+.frame span{font-size:10px;color:#777}
+.frame.selected{border-color:#111;box-shadow:0 0 0 2px var(--selected)}
+@media(max-width:1000px){.studio-settings{grid-template-columns:1fr 1fr 1fr}.studio-settings .wide{grid-column:1/-1}.studio-workspace{gap:25px}}
+@media(max-width:700px){.publication-nav{gap:16px;overflow-x:auto;justify-content:flex-start;padding:0 16px}.publication-nav button{white-space:nowrap}.studio-settings{grid-template-columns:1fr 1fr}.studio-workspace{grid-template-columns:minmax(0,1fr)}.creator-topbar select{max-width:150px}}
+@media print{.animation-stage,.animation-blocker{display:none!important}}

@@ -12,16 +12,26 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "types": [
       "react",
-      "react-dom"
+      "react-dom",
+      "node"
     ],
     "resolveJsonModule": true
   },
   "include": [
     "app/page.tsx",
     "app/puzzle.ts",
-    "client.tsx"
+    "app/application.tsx",
+    "app/creator.tsx",
+    "app/animation.ts",
+    "app/player.tsx",
+    "app/studio.tsx",
+    "app/site.ts",
+    "client.tsx",
+    "api/*.ts",
+    "server/*.ts"
   ]
 }

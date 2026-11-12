@@ -44,3 +44,7 @@ yarn-error.log*
 # OS metadata
 .DS_Store
 .vercel
+
+# Local API data and bundled handlers
+/.data/
+/.server/
