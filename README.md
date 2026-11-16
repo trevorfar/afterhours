@@ -29,9 +29,11 @@ Drafts autosave in this browser. **My puzzles** supports play, edit, export, and
 
 A puzzle can carry one optional pixel-art animation. It plays once, inside the grid's border, when the solver has filled the percentage of squares you choose. While it plays nothing can be clicked or typed; when it ends the puzzle is exactly as the solver left it. Progress is saved before the animation starts and is never changed by it, and adding or editing an animation does not reset anyone's solve. Resetting a puzzle lets its animation play again.
 
-Open **Animation Studio** in the navigation (or **Open Animation Studio** from the creator). Pick the canvas size N (2–32) and start a blank N × N canvas, choose a color by swatch, HEX, or R G B, and draw, erase, or fill. Add, duplicate, reorder, and delete frames; set frames per second, the trigger percentage, and a background color (or let the puzzle show through). **Preview** plays it in place. **Save with puzzle** stores it inside the selected puzzle, so it travels with that puzzle's export and with **Publish to site**; in editor mode, saving to a site puzzle goes live right away. **Export JSON** / **Import JSON** keep animations as local files, and the studio draft autosaves in this browser.
+Open **Animation Studio** in the navigation (or **Open Animation Studio** from the creator). Pick the canvas size N (2–256) and start a blank N × N canvas, choose a color by swatch, HEX, or R G B, and draw, erase, or fill; **Zoom** magnifies large canvases. Add, duplicate, reorder, and delete frames, and drag the frame slider to move through a long animation; set frames per second, the trigger percentage, and a background color (or let the puzzle show through). **Preview** plays it in place. **Save with puzzle** attaches it to the selected puzzle, so it travels with that puzzle's export and with **Publish to site**; in editor mode, saving to a site puzzle goes live right away.
 
-The JSON format is documented in [ANIMATION.md](ANIMATION.md) and is designed for AI agents to write. `mcp/animation.mjs` is a dependency-free MCP server (registered in `.mcp.json` as `afterhours-animation`) with tools to read the format, validate, render a PNG contact sheet, save, and attach an animation to a puzzle file.
+Animations can be long: up to 3,600 frames, or about 2½ minutes of 256 × 256 at 12 fps. They are stored as compact binary `.ahanim` files (a minute of 256 × 256 is typically 1–3 MB) rather than as JSON. The browser keeps them in IndexedDB, the site keeps them beside the puzzle list, and a puzzle only carries a small reference, so neither grows with the length of an animation. The studio draft autosaves the same way. **Export** / **Import** keep animations as local `.ahanim` files (Import also reads the older JSON files), and **Export MP4** renders a 1080 × 1920 H.264 video for TikTok, Reels and Shorts in a current Chrome, Edge or Safari.
+
+Both file formats are documented in [ANIMATION.md](ANIMATION.md). `mcp/animation.mjs` is a dependency-free MCP server (registered in `.mcp.json` as `afterhours-animation`) with tools to read the format, validate, render a PNG contact sheet, save, convert, and attach an animation to a puzzle file. `animations/make-rugby-run.mjs` draws the one-minute test animation `animations/rugby-run.ahanim` in code.
 
 ## Editor mode (site puzzles)
 
@@ -69,7 +71,7 @@ npm run build
 
 Puzzle checks cover minimum entry length, clue completeness, unique answers, every white square having two entries, connectivity, and rotational symmetry. DOM integration checks cover typing, clue navigation, direction changes, undo/redo, checks, erasing, pencil, rebus dialog, pause/resume, persistence, reveal/completion, and reset. Browser visual QA could not run in the authoring sandbox because browser process/network socket creation was blocked.
 
-Animation tests cover format validation, saving with the puzzle, the MCP tools, one-time playback at the trigger, input blocking, progress restoration, and the studio's drawing and frame tools.
+Animation tests cover both file formats, long-animation file size, puzzle references, the animation file API, the MCP tools, one-time playback at the trigger, input blocking, progress restoration, and the studio's drawing and frame tools.
 
 Generator tests cover answer/clue preservation, unplaceable words, custom sizes, JSON validation, rebus cells, and progress isolation. A second DOM integration suite verifies generation, validation, saving, custom-size solving and completion, library editing, block undo, and deletion.
 

@@ -8,10 +8,11 @@
     "dev": "node build.mjs && node serve.mjs",
     "start": "node serve.mjs",
     "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
-    "test": "node --experimental-strip-types tests/puzzle.test.mjs && node --experimental-strip-types tests/creator.test.mjs && node build.mjs && node --experimental-strip-types tests/animation.test.mjs && node --experimental-strip-types tests/api.test.mjs && node tests/interactions.mjs && node tests/creator-interactions.mjs && node --experimental-strip-types tests/animation-interactions.mjs"
+    "test": "node --experimental-strip-types tests/puzzle.test.mjs && node --experimental-strip-types tests/creator.test.mjs && node build.mjs && node --experimental-strip-types tests/animation.test.mjs && node --experimental-strip-types tests/api.test.mjs && node tests/server-build.test.mjs && node tests/interactions.mjs && node tests/creator-interactions.mjs && node --experimental-strip-types tests/animation-interactions.mjs"
   },
   "dependencies": {
     "@upstash/redis": "1.39.0",
+    "mp4-muxer": "5.2.2",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

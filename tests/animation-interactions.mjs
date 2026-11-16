@@ -2,8 +2,10 @@ import {Window} from 'happy-dom';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {progressKey,sample} from '../app/puzzle.ts';
+import {decodeAnimation} from '../app/animation.ts';
 const window=new Window({url:'http://localhost:3000',settings:{enableJavaScriptEvaluation:true}});
 window.structuredClone=globalThis.structuredClone;
+for(const name of ['CompressionStream','DecompressionStream'])window[name]=globalThis[name];
 window.fetch=()=>Promise.reject(new Error('offline'));
 // A saved puzzle whose 0.3-second animation plays once 10% of the squares (5 of 41) are filled.
 const animation={version:1,name:'Flash',size:4,fps:10,trigger:10,background:'#ffffff',palette:{b:'#326da9'},frames:[['b...','....','....','....'],['bb..','bb..','....','....'],['bbbb','bbbb','bbbb','bbbb']]};
@@ -48,23 +50,37 @@ assert.equal(doc.querySelectorAll('.revealed').length,41);await click(button('Ba
 
 // The studio: draw, add a frame, and save it with the puzzle without touching the solve.
 await click(button('Animation Studio'));
-assert.equal(doc.querySelectorAll('.pixel-pad > div').length,256,'starts with a blank 16 × 16 canvas');
+const pad=q('.pixel-pad canvas');
+assert.equal(pad.width,16,'starts with a blank 16 × 16 canvas');assert.equal(q('.validation'),null);
+// happy-dom has no layout, so give the pad a size: each animation pixel is 10 × 10 on screen.
+pad.getBoundingClientRect=()=>({left:0,top:0,width:160,height:160});
 const setValue=async(el,value)=>{Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set.call(el,value);el.dispatchEvent(new window.Event('input',{bubbles:true}));await wait()};
 await setValue(q('[aria-label="Hex color"]'),'#ff8800');
-const paint=async i=>{doc.querySelectorAll('.pixel-pad > div')[i].dispatchEvent(new window.MouseEvent('pointerdown',{bubbles:true}));window.dispatchEvent(new window.Event('pointerup'));await wait()};
+const paint=async i=>{pad.dispatchEvent(new window.MouseEvent('pointerdown',{bubbles:true,clientX:i%16*10+5,clientY:Math.floor(i/16)*10+5}));window.dispatchEvent(new window.Event('pointerup'));await wait()};
+// Exporting hands the browser an .ahanim file; reading it back shows exactly what the studio holds.
+let exported;window.URL.createObjectURL=blob=>{exported=blob;return 'blob:exported'};window.URL.revokeObjectURL=()=>{};
+const current=async()=>{await click(button('Export'));await wait(60);return decodeAnimation(new Uint8Array(await exported.arrayBuffer()))};
 await paint(17);
-let draft=JSON.parse(window.localStorage.getItem('after-hours-animation-draft'));
-assert.deepEqual(draft.palette,{0:'#ff8800'});assert.equal(draft.frames[0][1],'.0..............');
-await click(button('◻ Erase'));await paint(17);await click(button('↶ Undo'));
+let draft=await current();
+assert.deepEqual(draft.palette,['#ff8800']);assert.deepEqual([...draft.frames[0]].flatMap((v,i)=>v?[i]:[]),[17]);
+await click(button('◻ Erase'));await paint(17);assert.ok((await current()).frames[0].every(v=>v===0),'erased');await click(button('↶ Undo'));
 await click(button('+ New frame'));await click(button('▧ Fill'));await paint(0);
 await setValue(q('[aria-label="Canvas size"]'),'8');await click(button('New blank canvas'));await click(button('Cancel'));
-draft=JSON.parse(window.localStorage.getItem('after-hours-animation-draft'));
-assert.equal(draft.frames.length,2);assert.equal(draft.frames[0][1],'.0..............');assert.ok(draft.frames[1].every(row=>row==='0'.repeat(16)));
-assert.equal(doc.querySelectorAll('.frame').length,2);
+draft=await current();
+assert.equal(draft.frames.length,2);assert.deepEqual([...draft.frames[0]].flatMap((v,i)=>v?[i]:[]),[17]);assert.ok(draft.frames[1].every(v=>v===1));
+assert.equal(doc.querySelectorAll('.frame').length,2);assert.match(q('.studio-frames > p').textContent,/2 of up to 3600/);
 await click(button('▶ Preview'));assert.ok(q('.pixel-wrap .animation-stage'));await click(button('■ Stop'));assert.equal(q('.pixel-wrap .animation-stage'),null);
-await click(button('Save with puzzle →'));
+await setValue(q('.studio-settings label:nth-child(3) input'),'10');
+await click(button('Save with puzzle →'));await wait(100);
 const saved=JSON.parse(window.localStorage.getItem('after-hours-library')).find(p=>p.id==='animated');
-assert.ok(saved,'saved with the selected puzzle');assert.equal(saved.animation.size,16);assert.equal(saved.animation.frames.length,2);assert.deepEqual(saved.cells,sample.cells);
+assert.ok(saved,'saved with the selected puzzle');assert.equal(saved.animation.version,2,'the puzzle stores a reference, not the pixels');assert.match(saved.animation.id,/^[0-9a-f]{32}$/);
+assert.equal(saved.animation.size,16);assert.equal(saved.animation.trigger,10);assert.equal(saved.animation.frames,2);assert.ok(saved.animation.bytes<300);assert.deepEqual(saved.cells,sample.cells);
+assert.match(q('.creator-message').textContent,/Saved with “Animated one”/);
 assert.equal(stored().board.letters.filter(Boolean).length,progress,'saving an animation keeps solving progress');
-console.log('PASS: animation plays once at the trigger, blocks input, restores and keeps progress; studio draws, fills, undoes, adds frames, previews, and saves with the puzzle.');
+// Resetting the puzzle lets the stored animation play again, now loaded through its reference.
+window.localStorage.removeItem(saveKey);
+await click(button('My Puzzles'));await click(card().querySelector('.primary'));
+for(const l of 'ABCDE')await key(l);
+assert.ok(q('.grid-wrap .animation-stage canvas'),'the saved animation plays from its file');await wait(400);assert.equal(q('.animation-stage'),null);
+console.log('PASS: animation plays once at the trigger, blocks input, restores and keeps progress; studio draws, fills, undoes, adds frames, previews, exports, and saves with the puzzle as a file reference that plays back.');
 await window.happyDOM.abort();window.close();

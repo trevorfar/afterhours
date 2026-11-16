@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { derive, progressKey, type Puzzle, type Entry } from './puzzle';
 import Player from './player';
+import {loadAnimation} from './blobs';
+import type {Animation} from './animation';
 type Board={letters:string[]; pencils:number[]; revealed:number[]};
 export default function Solver({puzzle}:{puzzle:Puzzle}){
  const {entries,numbers}=derive(puzzle),solution=puzzle.cells,size=puzzle.size;
@@ -16,7 +18,10 @@ export default function Solver({puzzle}:{puzzle:Puzzle}){
  const solved=solution.every((s,i)=>s==='#'||board.letters[i]===s),full=filled===total;
  // The puzzle's animation plays once, when enough squares are filled. It only covers the grid: the board state and
  // its saved copy are never touched, so the solver's progress is exactly as they left it when the overlay goes away.
- const animation=puzzle.animation,animating=ready&&!!animation&&!animated&&total>0&&filled/total*100>=animation.trigger;
+ const [animation,setAnimation]=useState<Animation>();
+ // Its file is fetched as soon as the puzzle opens, so it is ready long before the trigger.
+ useEffect(()=>{let current=true;if(puzzle.animation)loadAnimation(puzzle.animation).then(a=>{if(current)setAnimation(a)},()=>{});return()=>{current=false}},[puzzle.animation]);
+ const animating=ready&&!!animation&&!animated&&total>0&&filled/total*100>=animation.trigger;
  const time=`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
  useEffect(()=>{try{const data=JSON.parse(localStorage.getItem(key)||'null');if(data&&Array.isArray(data.board?.letters)&&data.board.letters.length===solution.length&&data.board.letters.every((l:unknown)=>typeof l==='string')&&Array.isArray(data.board.pencils)&&Array.isArray(data.board.revealed)){setBoard(data.board);setSeconds(data.seconds||0);setHelped(!!data.helped);setStarted(!!data.started);setSkip(data.skip!==false);setAuto(!!data.auto);setAnimated(!!data.animated);}}catch{}setReady(true)},[]);
  useEffect(()=>{if(ready)try{localStorage.setItem(key,JSON.stringify({board,seconds,helped,started,skip,auto,animated}))}catch{}},[board,seconds,helped,started,skip,auto,animated,ready]);

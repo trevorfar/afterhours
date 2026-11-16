@@ -13,6 +13,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
     "esModuleInterop": true,
     "types": [
       "react",
@@ -28,6 +29,8 @@
     "app/creator.tsx",
     "app/animation.ts",
     "app/player.tsx",
+    "app/blobs.ts",
+    "app/video.ts",
     "app/studio.tsx",
     "app/site.ts",
     "client.tsx",

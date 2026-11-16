@@ -3,7 +3,8 @@ import {useEffect,useRef,useState} from 'react';
 import Solver from './page';
 import Creator,{download} from './creator';
 import Studio from './studio';
-import type {Animation} from './animation';
+import {isRef,LIMITS,fileSize,type AnimationRef} from './animation';
+import {absorbAnimation,pruneAnimations,uploadAnimation} from './blobs';
 import {sample12} from './examples';
 import {parsePuzzle,progressKey,sample,validate,type Puzzle} from './puzzle';
 import {checkEditor,loadSite,logIn,logOut,saveSite,type SiteError} from './site';
@@ -15,8 +16,11 @@ export default function Application(){
  const file=useRef<HTMLInputElement>(null);
  // The first site puzzle opens on arrival, so the editor's ordering decides what visitors see first.
  const puzzle=chosen??site[0]??sample,onSite=(p:Puzzle)=>site.some(s=>s.id===p.id);
- useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem('after-hours-library')||'[]');if(Array.isArray(saved))setLibrary(saved.flatMap(p=>{try{return [parsePuzzle(p)]}catch{return []}}))}catch{}
-  loadSite().then(list=>{setRev(list.rev);if(list.puzzles)setSite(list.puzzles)}).catch(()=>{}).finally(()=>setLoaded(true));
+ useEffect(()=>{let mine:Puzzle[]=[];try{const saved=JSON.parse(localStorage.getItem('after-hours-library')||'[]');if(Array.isArray(saved))setLibrary(mine=saved.flatMap(p=>{try{return [parsePuzzle(p)]}catch{return []}}))}catch{}
+  loadSite().then(list=>{setRev(list.rev);if(list.puzzles)setSite(list.puzzles);
+   // Tidy up: animation files that no puzzle on this device or on the site points at any more.
+   let draft:Puzzle|undefined;try{draft=JSON.parse(localStorage.getItem('after-hours-draft')||'null')??undefined}catch{}
+   pruneAnimations([...mine,...(list.puzzles??[]),...(draft?[draft]:[])].flatMap(p=>isRef(p.animation)?[p.animation.id]:[]))}).catch(()=>{}).finally(()=>setLoaded(true));
   checkEditor().then(setEditor)},[]);
  function store(items:Puzzle[]){try{localStorage.setItem('after-hours-library',JSON.stringify(items));setLibrary(items);return true}catch{setNotice('Could not save to browser storage. Export your puzzle as a backup.');return false}}
  function play(p:Puzzle){if(validate(p).length){setEditing(p);setView('create');return}setChosen(p);setView('play')}
@@ -27,8 +31,11 @@ export default function Application(){
  const animatable=[...library,...(editor?site.filter(s=>!library.some(p=>p.id===s.id)):[])];
  function animate(p:Puzzle){if(!store([...library.filter(item=>item.id!==p.id),structuredClone(p)]))return;setEditing(p);setAnimating(p.id);setView('animate')}
  // Adds, replaces or (with no animation) removes a puzzle's animation everywhere that puzzle lives. Solving progress is keyed without it, so it carries over.
- async function attach(id:string,animation?:Animation){const apply=(p:Puzzle):Puzzle=>{const {animation:_,...rest}=p;return animation?{...rest,animation}:rest};const local=library.some(p=>p.id===id),live=editor&&site.some(p=>p.id===id);
-  if(!local&&!live)return false;if(local&&!store(library.map(p=>p.id===id?apply(p):p)))return false;
+ async function attach(id:string,animation?:AnimationRef){const apply=(p:Puzzle):Puzzle=>{const {animation:_,...rest}=p;return animation?{...rest,animation}:rest};const local=library.some(p=>p.id===id),live=editor&&site.some(p=>p.id===id);
+  if(!local&&!live)return false;
+  // The file goes to the site before the puzzle that points at it, so visitors never get a reference to nothing.
+  if(live&&animation)try{setSaving(true);await uploadAnimation(animation)}catch(e){if((e as SiteError).status===401)setEditor(false);setNotice((e as Error).message);return false}finally{setSaving(false)}
+  if(local&&!store(library.map(p=>p.id===id?apply(p):p)))return false;
   try{const draft=JSON.parse(localStorage.getItem('after-hours-draft')||'null');if(draft?.id===id)localStorage.setItem('after-hours-draft',JSON.stringify(apply(draft)))}catch{}
   if(chosen?.id===id)setChosen(apply(chosen));if(editing?.id===id)setEditing(apply(editing));
   const title=animatable.find(p=>p.id===id)?.title||'Untitled crossword';
@@ -36,7 +43,7 @@ export default function Application(){
   setNotice(animation?`Animation saved with “${title}”.`:`Animation removed from “${title}”.`);return true}
  // Every editor change sends the whole ordered list; the server rejects it if someone else saved first.
  async function commitSite(next:Puzzle[],done:string){const before=site;setSite(next);setSaving(true);try{const saved=await saveSite(rev,next);setRev(saved.rev);setSite(saved.puzzles??next);setNotice(done);return true}catch(e){const err=e as SiteError;if(err.status===409&&err.body){setRev(err.body.rev);setSite(err.body.puzzles??defaults)}else setSite(before);if(err.status===401)setEditor(false);setNotice(err.message);return false}finally{setSaving(false)}}
- function publish(p:Puzzle){const copy=structuredClone(p);return onSite(p)?commitSite(site.map(s=>s.id===p.id?copy:s),`“${p.title}” was updated on the site.`):commitSite([...site,copy],`“${p.title}” is now on the site.`)}
+ async function publish(p:Puzzle){const copy=structuredClone(p);try{setSaving(true);await uploadAnimation(copy.animation)}catch(e){if((e as SiteError).status===401)setEditor(false);setNotice((e as Error).message);return false}finally{setSaving(false)}return onSite(p)?commitSite(site.map(s=>s.id===p.id?copy:s),`“${p.title}” was updated on the site.`):commitSite([...site,copy],`“${p.title}” is now on the site.`)}
  function move(from:number,to:number){if(to<0||to>=site.length||from===to)return;const next=[...site];next.splice(to,0,...next.splice(from,1));commitSite(next,to===0?`“${next[0].title}” now opens first.`:'New order saved.')}
  async function enterEditor(e:React.FormEvent){e.preventDefault();try{await logIn(password);setEditor(true);setLogin(false);setPassword('');setLoginError('');setView('library');setNotice('Editor mode is on. Changes under “On the site” go live right away.')}catch(err){setLoginError((err as Error).message)}}
  async function exitEditor(){await logOut().catch(()=>{});setEditor(false);setNotice('You left editor mode.')}
@@ -47,7 +54,10 @@ export default function Application(){
   <section><h2>Your puzzles</h2><div className="puzzle-cards">{library.filter(p=>!validate(p).length).map(localCard)}<button className="new-puzzle-card" onClick={beginNew}><span>＋</span><strong>Create a crossword</strong><p>Start with a list of words or a blank grid.</p></button></div></section>
   {library.some(p=>validate(p).length)&&<section><h2>Drafts</h2><div className="puzzle-cards">{library.filter(p=>validate(p).length).map(localCard)}</div></section>}
   <p className="fine">Your puzzles and solving progress are stored in this browser. Export JSON to back up a puzzle or send it to a friend. Exported files contain the answers.{editor?' Publishing copies a finished puzzle to the site for everyone.':''}</p></main>}
- <input ref={file} hidden type="file" accept=".json,application/json" onChange={async e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;try{if(f.size>1000000)throw new Error('Choose a file smaller than 1 MB.');const p={...parsePuzzle(JSON.parse(await f.text())),id:crypto.randomUUID()};if(store([...library,p]))setNotice(editor?'Puzzle imported. Publish it to add it to the site.':'Puzzle imported. Choose Play puzzle or Finish editing.')}catch(err){setNotice((err as Error).message)}}}/>
+ <input ref={file} hidden type="file" accept=".json,application/json" onChange={async e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;try{if(f.size>LIMITS.maxBytes*2)throw new Error(`Choose a file smaller than ${fileSize(LIMITS.maxBytes*2)}.`);const raw=JSON.parse(await f.text()),p={...parsePuzzle(raw),id:crypto.randomUUID()};
+  // An exported puzzle carries its animation's file; it moves into this browser's animation storage.
+  if(isRef(p.animation)){const id=await absorbAnimation(raw.animation);if(id)p.animation={...p.animation,id}}
+  if(store([...library,p]))setNotice(editor?'Puzzle imported. Publish it to add it to the site.':'Puzzle imported. Choose Play puzzle or Finish editing.')}catch(err){setNotice((err as Error).message)}}}/>
  {pendingDelete&&<div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true" aria-label="Delete puzzle"><h2>Delete this puzzle?</h2><p>This removes it from your library. Export it first if you want a backup.</p><button className="primary" autoFocus onClick={()=>{if(store(library.filter(p=>p.id!==pendingDelete))){if(chosen?.id===pendingDelete)setChosen(undefined);setPendingDelete(undefined)}}}>Delete puzzle</button><button onClick={()=>setPendingDelete(undefined)}>Cancel</button></section></div>}
  {pendingRemove&&<div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true" aria-label="Remove from the site"><h2>Remove from the site?</h2><p>“{pendingRemove.title}” will disappear for everyone. Export it first if you might want it back.</p><button className="primary" autoFocus onClick={()=>{const p=pendingRemove;setPendingRemove(undefined);if(chosen?.id===p.id)setChosen(undefined);commitSite(site.filter(s=>s.id!==p.id),`“${p.title}” was removed from the site.`)}}>Remove puzzle</button><button onClick={()=>setPendingRemove(undefined)}>Cancel</button></section></div>}
  {login&&<div className="modal-backdrop" onClick={()=>setLogin(false)}><form className="modal login-form" role="dialog" aria-modal="true" aria-label="Editor mode" onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==='Escape')setLogin(false)}} onSubmit={enterEditor}><span className="eyebrow">FOR THE PEOPLE BEHIND THE PUZZLES</span><h2>Editor mode.</h2><label>Password<input type="password" autoFocus autoComplete="current-password" value={password} onChange={e=>{setPassword(e.target.value);setLoginError('')}}/></label><p className="fine">Hint: Adri middle name</p>{loginError&&<p className="error-text" role="alert">{loginError}</p>}<button className="primary" type="submit" disabled={!password}>Enter editor mode →</button><button type="button" onClick={()=>setLogin(false)}>Cancel</button></form></div>}</>

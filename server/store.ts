@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Puzzle } from '../app/puzzle.js';
 
@@ -19,6 +19,9 @@ export interface Store {
   write(rev: number, puzzles: Puzzle[]): Promise<SiteList | null>;
   /** Counts a hit against `key` inside a rolling window and returns the running total. */
   hit(key: string, windowSeconds: number): Promise<number>;
+  /** Binary values (animation files, in parts), kept apart from the puzzle list. */
+  getBlob(key: string): Promise<Uint8Array | null>;
+  setBlob(key: string, bytes: Uint8Array): Promise<void>;
 }
 
 const KEY = 'afterhours:puzzles', REV_KEY = 'afterhours:puzzles:rev';
@@ -47,10 +50,20 @@ class UpstashStore implements Store {
     if (count === 1) await this.redis.expire(k, windowSeconds);
     return count;
   }
+  // Redis values are text. The prefix also stops the client from reading an all-digit value as a number.
+  async getBlob(key: string) {
+    const value = await this.redis.get<string>(`afterhours:${key}`);
+    return typeof value === 'string' && value.startsWith('b64:') ? new Uint8Array(Buffer.from(value.slice(4), 'base64')) : null;
+  }
+  async setBlob(key: string, bytes: Uint8Array) {
+    await this.redis.set(`afterhours:${key}`, 'b64:' + Buffer.from(bytes).toString('base64'));
+  }
 }
 
 class FileStore implements Store {
-  private file = path.join(process.env.AFTERHOURS_DATA_DIR || path.join(process.cwd(), '.data'), 'puzzles.json');
+  private dir = process.env.AFTERHOURS_DATA_DIR || path.join(process.cwd(), '.data');
+  private file = path.join(this.dir, 'puzzles.json');
+  private blob = (key: string) => path.join(this.dir, 'blobs', key.replace(/[^a-z0-9]/g, '-'));
   private hits = new Map<string, { count: number; until: number }>();
   async read(): Promise<SiteList> {
     try {
@@ -71,6 +84,19 @@ class FileStore implements Store {
     const next = entry && entry.until > now ? { ...entry, count: entry.count + 1 } : { count: 1, until: now + windowSeconds * 1000 };
     this.hits.set(key, next);
     return next.count;
+  }
+  async getBlob(key: string) {
+    try {
+      return new Uint8Array(await readFile(this.blob(key)));
+    } catch {
+      return null;
+    }
+  }
+  async setBlob(key: string, bytes: Uint8Array) {
+    const file = this.blob(key), partial = `${file}.${process.pid}.tmp`;
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(partial, bytes);
+    await rename(partial, file);
   }
 }
 

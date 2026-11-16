@@ -105,15 +105,19 @@ main{max-width:1410px;margin:auto;padding:34px 36px 0}.eyebrow,.kicker{font-size
 .swatches button{width:24px;height:24px;border:1px solid #0003;border-radius:2px}
 .swatches button.selected{outline:2px solid #111;outline-offset:1px}
 .pixel-wrap{position:relative;border:1px solid #111}
-.pixel-pad{display:grid;aspect-ratio:1;touch-action:none;user-select:none;cursor:crosshair}
+.pixel-scroll{overflow:auto;aspect-ratio:1}
+.pixel-pad{position:relative;aspect-ratio:1;touch-action:none;user-select:none;cursor:crosshair}
+.pixel-lines{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(to right,#0000001f 1px,transparent 1px),linear-gradient(to bottom,#0000001f 1px,transparent 1px)}
+.studio-loading{display:grid;place-items:center;background:#fffd;font-size:13px;color:#666}
+.editor-tools .zoom,.scrubber{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+.scrubber{margin:0 0 14px}.scrubber input{flex:1;min-width:0}
 .pixel-pad.see-through,.studio .see-through{background:repeating-conic-gradient(#e9e9e9 0 25%,#fff 0 50%) 0 0/16px 16px}
-.pixel-pad>div{box-shadow:inset 0 0 0 .5px #0000001f;min-width:0;min-height:0}
 .pixel-wrap .animation-stage{inset:0;cursor:default}
 .studio-frames h2{font:400 30px 'Libre Caslon Display',Georgia,serif;margin:5px 0 8px}
 .studio-frames>p{font-size:13px;color:#666;margin:0 0 16px}
 .frame-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px;max-height:420px;overflow:auto;padding:3px}
-.frame{border:1px solid #ccc;padding:4px 4px 2px;display:flex;flex-direction:column;gap:3px;align-items:center;background:#fff}
-.frame canvas{aspect-ratio:1;border:1px solid #eee}
+.frame{content-visibility:auto;contain-intrinsic-size:auto 72px auto 90px;border:1px solid #ccc;padding:4px 4px 2px;display:flex;flex-direction:column;gap:3px;align-items:center;background:#fff}
+.frame canvas{aspect-ratio:1;height:auto;border:1px solid #eee}
 .frame span{font-size:10px;color:#777}
 .frame.selected{border-color:#111;box-shadow:0 0 0 2px var(--selected)}
 @media(max-width:1000px){.studio-settings{grid-template-columns:1fr 1fr 1fr}.studio-settings .wide{grid-column:1/-1}.studio-workspace{gap:25px}}

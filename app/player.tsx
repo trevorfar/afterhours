@@ -1,19 +1,37 @@
 import { useEffect, useRef } from 'react';
 import type { Animation } from './animation';
 
-/** Draws one frame at one canvas pixel per animation pixel; CSS scales it up with crisp edges. */
-export function paint(canvas: HTMLCanvasElement | null, animation: Pick<Animation, 'size' | 'background' | 'palette'>, frame: string[] | undefined) {
-  const ctx = canvas?.getContext?.('2d');
-  if (!ctx) return;
-  const { size, background, palette } = animation;
-  ctx.clearRect(0, 0, size, size);
-  if (background) { ctx.fillStyle = background; ctx.fillRect(0, 0, size, size); }
-  frame?.forEach((row, y) => {
-    for (let x = 0; x < size; x++) {
-      const color = palette[row[x]];
-      if (color) { ctx.fillStyle = color; ctx.fillRect(x, y, 1, 1); }
+type Look = Pick<Animation, 'size' | 'background' | 'palette'>;
+const rgba = (hex: string, alpha = 255) => ((alpha << 24) | (parseInt(hex.slice(5, 7), 16) << 16) | (parseInt(hex.slice(3, 5), 16) << 8) | parseInt(hex.slice(1, 3), 16)) >>> 0;
+// One lookup table per palette: pixel value → packed color, with the faint "previous frame" colors after it.
+const tables = new WeakMap<string[], { background: string; table: Uint32Array }>();
+function colors({ palette, background }: Look) {
+  const cached = tables.get(palette);
+  if (cached?.background === background) return cached.table;
+  const table = new Uint32Array(512);
+  table[0] = background ? rgba(background) : 0;
+  palette.forEach((hex, i) => { table[i + 1] = rgba(hex); table[i + 257] = rgba(hex, 85); });
+  tables.set(palette, { background, table });
+  return table;
+}
+
+/**
+ * Draws one frame. The canvas is normally one canvas pixel per animation pixel (CSS scales it up with crisp edges);
+ * a smaller canvas, such as a thumbnail, samples the frame. `ghost` shows faintly through empty pixels.
+ */
+export function paint(canvas: HTMLCanvasElement | OffscreenCanvas | null, animation: Look, frame: Uint8Array | undefined, ghost?: Uint8Array) {
+  const ctx = canvas?.getContext?.('2d') as CanvasRenderingContext2D | null | undefined;
+  if (!canvas || !ctx) return;
+  const { size } = animation, { width, height } = canvas, table = colors(animation);
+  const image = ctx.createImageData(width, height), out = new Uint32Array(image.data.buffer);
+  for (let y = 0, i = 0; y < height; y++) {
+    const row = Math.floor(y * size / height) * size;
+    for (let x = 0; x < width; x++, i++) {
+      const at = row + Math.floor(x * size / width), value = frame ? frame[at] : 0;
+      out[i] = value || !ghost || !ghost[at] ? table[value] : table[ghost[at] + 256];
     }
-  });
+  }
+  ctx.putImageData(image, 0, 0);
 }
 
 /**
