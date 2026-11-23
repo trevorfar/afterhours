@@ -124,3 +124,18 @@ main{max-width:1410px;margin:auto;padding:34px 36px 0}.eyebrow,.kicker{font-size
 @media(max-width:700px){.publication-nav{gap:16px;overflow-x:auto;justify-content:flex-start;padding:0 16px}.publication-nav button{white-space:nowrap}.studio-settings{grid-template-columns:1fr 1fr}.studio-workspace{grid-template-columns:minmax(0,1fr)}.creator-topbar select{max-width:150px}}
 @media print{.animation-stage,.animation-blocker{display:none!important}}
 @media screen{.grid .square.word.selected{background:#ffc96c;box-shadow:inset 0 0 0 2px #855511}}
+.publication-actions .rankings-link{display:inline-flex;align-items:center;gap:.4rem;color:#315d4d}
+.leaderboard-panel{max-width:44rem;background:#fffdf7;border:1px solid #c7c9b9;border-radius:8px;overflow:hidden}
+.leaderboard-panel header{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding:1rem 1.25rem;background:#244b40;color:white}
+.library .leaderboard-panel h2{margin:0;color:inherit;scroll-margin-top:1rem}
+.leaderboard-panel header span,.leaderboard-list small{font-size:.8rem}
+.leaderboard-panel p{padding:0 1.25rem}
+.leaderboard-list{list-style:none;margin:0;padding:0}
+.leaderboard-list li{display:flex;align-items:center;gap:.75rem;padding:.65rem 1.25rem;border-top:1px solid #e3e2d7}
+.leaderboard-list strong{overflow-wrap:anywhere}
+.leaderboard-list b{margin-left:auto;font-variant-numeric:tabular-nums}
+.leaderboard-list .current-player{background:#edf4ec}
+.rank-badge{display:grid;place-items:center;min-width:2rem;height:2rem;border-radius:50%;font-variant-numeric:tabular-nums}
+.rank-1{background:#efda9a}.rank-2{background:#dce1e3}.rank-3{background:#e8cbbb}
+@media(max-width:1050px){.rankings-link span{display:none}.publication-actions .rankings-link{padding:8px}}
+@media(max-width:550px){.publication-actions .create-button{display:none}.publication-actions{gap:6px}.publication-actions>button{max-width:7rem;overflow:hidden;text-overflow:ellipsis}.leaderboard-panel header{align-items:start;flex-direction:column;gap:.25rem}}
